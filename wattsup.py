@@ -149,7 +149,6 @@ class WattsUp(object):
     #start internal logging
     self.serialPort.write('#L,W,3,I,,1;'.encode())
 
-    self.serialPort.close()
     print ('Memory cleared! :', self.name)
     
   def reset(self):
@@ -277,9 +276,11 @@ def main(args, parser):
           continue
         else:
           meter.clear()
+          meter.serialPort.close()
       else:
         sys.stdout.write('Clearing the internal memory of all meters...\n')
         meter.clear()
+        meter.serialPort.close()
     sys.exit(0)
     
   if args.reset:
@@ -342,8 +343,13 @@ def main(args, parser):
       sys.exit(0)
 
   # Create WattsUp objects and processes (logger)
+
   loggers = []
   for meter in meters:
+    if args.clearandlog:
+      print("Clearing internal memory.")
+      meter.clear()
+
     logger = multiprocessing.Process(target=meter.log, args=(args.raw, args.prefix,))
     loggers.append(logger)
     # logger.start()
@@ -370,6 +376,7 @@ if __name__ == '__main__':
   parser.add_argument('-r', '--raw', dest='raw', action='store_true', default=False, help='Save raw data')
   parser.add_argument('-y', '--yes', dest='yes', action='store_true', default=False, help='Yes to all confirmations')
   parser.add_argument('-c', '--clear', dest='clear', action='store_true', default=False, help='Clear the internal memory')
+  parser.add_argument('-cl', '--clearandlog', dest='clearandlog', action='store_true', default=False, help='Clear the internal memory and start logging')
   parser.add_argument('-f', '--fetch', dest='fetch', action='store_true', default=False, help='Fetch all data logged in the internal memory')
   parser.add_argument('--reset', dest='reset', action='store_true', default=False, help='Reset factory defaults and set chosen fields to all.')
   parser.add_argument('--soft-reset', dest='softreset', action='store_true', default=False, help='Soft reset the meter')
@@ -378,7 +385,6 @@ if __name__ == '__main__':
     main(args, parser)
   except KeyboardInterrupt:
     print ('\nQuitting...')
-
 
 
 
